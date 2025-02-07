@@ -54,7 +54,7 @@ def run_main(config: str, min_accuracy: float):
         inference_pipeline(
             pipeline_name="continuous_deployment_pipeline",
             pipeline_step_name="mlflow_model_deployer_step",
-            model_name='lightgbm'
+            model_name='model'
         )
 
     print(
@@ -70,7 +70,7 @@ def run_main(config: str, min_accuracy: float):
     existing_services = mlflow_model_deployer_component.find_model_server(
         pipeline_name="continuous_deployment_pipeline",
         pipeline_step_name="mlflow_model_deployer_step",
-        model_name="lightgbm",
+        model_name="model",
     )
 
     if existing_services:

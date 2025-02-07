@@ -35,8 +35,6 @@ def clean_data(
     if data is None or data.empty:
         raise ValueError("Received empty DataFrame in clean_data!")
 
-    print('running function')
-
     try:
         preprocess_strategy = DataPreprocessStrategy()
         # data= ingest_data()
@@ -49,7 +47,6 @@ def clean_data(
         return x_train, x_test, y_train, y_test
 
     except Exception as e:
-        print('GOING TO ERROR')
         logging.error(e)
         raise e
 

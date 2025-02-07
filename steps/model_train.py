@@ -1,7 +1,11 @@
 import logging
 import pickle
+from typing import Annotated
+
 import mlflow
 import pandas as pd
+from zenml.materializers import CloudpickleMaterializer
+
 from model.model_dev import (
     HyperparameterTuner,
     LightGBMModel,
@@ -9,6 +13,7 @@ from model.model_dev import (
     RandomForestModel,
     XGBoostModel,
 )
+from materializer.custom_materializer import ModelMaterializer
 from sklearn.base import RegressorMixin
 from zenml import step
 from zenml.client import Client
@@ -16,14 +21,15 @@ from zenml.client import Client
 
 experiment_tracker = Client().active_stack.experiment_tracker
 
+
 # @step(experiment_tracker=experiment_tracker.name)
-@step
+@step(enable_cache=False, output_materializers={"output": CloudpickleMaterializer})
 def train_model(
     x_train: pd.DataFrame,
     x_test: pd.DataFrame,
     y_train: pd.Series,
     y_test: pd.Series,
-    model_name: str = "lightgbm",
+    model_name: str = "linear_regression",
     fine_tuning: bool = False
 ) -> RegressorMixin:
     """
@@ -62,14 +68,19 @@ def train_model(
         else:
             trained_model = model.train(x_train, y_train)
 
-        # ✅ Log model to MLflow
-        with mlflow.start_run():
-            mlflow.sklearn.log_model(model, "model")
-            mlflow.log_params({"model": model_name})
 
-        model_path = "trained_model.pkl"
-        with open(model_path, "wb") as f:
-            pickle.dump(model, f)
+        # ✅ Log model to MLflow
+        with mlflow.start_run() as run:
+            mlflow.sklearn.log_model(trained_model,
+                                     artifact_path="model",
+                                     signature=mlflow.models.infer_signature(x_train, trained_model.predict(x_train)),
+                                     )
+            mlflow.log_params({"model": "model"})
+            mlflow.log_params(trained_model.get_params())
+            mlflow.log_metric("train_score", trained_model.score(x_train, y_train))
+            mlflow.log_metric("test_score", trained_model.score(x_test, y_test))
+
+        print(f"✅ DEBUG: Model logged to MLflow. Run ID: {run.info.run_id}")
 
         return trained_model
 

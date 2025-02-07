@@ -4,7 +4,6 @@ import os
 
 import numpy as np
 import pandas as pd
-from materializer.custom_materializer import cs_materializer
 from steps.clean_data import clean_data
 from steps.evaluation import evaluation
 from steps.ingest_data import ingest_data
@@ -46,26 +45,6 @@ def dynamic_importer() -> str:
     return data
 
 
-@step
-def verify_ingest_data(data) -> pd.DataFrame:
-    """Intermediate step to check if the DataFrame from ingest_data is valid before passing to clean_data."""
-
-    print("🟢 DEBUG: Running verify_ingest_data step...")
-    print(f"🟢 DEBUG: Received DataFrame type: {type(data)}")
-
-
-    if data is None:
-        raise ValueError("❌ verify_ingest_data received None instead of a DataFrame!")
-
-    if data.empty:
-        raise ValueError("❌ verify_ingest_data received an EMPTY DataFrame!")
-
-    print("🟢 DEBUG: Top 5 rows of DataFrame:")
-    print(data.head())
-
-    return data  # ✅ Pass the verified DataFrame to clean_data()
-
-
 
 @pipeline(enable_cache=False, settings={"docker": docker_settings})
 def continuous_deployment_pipeline(
@@ -85,7 +64,7 @@ def continuous_deployment_pipeline(
         deploy_decision=True,
         workers=workers,
         timeout=timeout,
-        model_name="lightgbm"
+        model_name="model"
     )
 
 
